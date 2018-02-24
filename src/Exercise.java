@@ -2,13 +2,13 @@ public class Exercise {
 	private String name;
 	private String musclePart;
 	
-	private double calories;
+	private int calories;
 	private int requiredTime;
 	
 	private boolean outside;
 	private boolean equipment;
 	
-	public Exercise(String name, String musclePart, double calories,
+	public Exercise(String name, String musclePart, int calories,
 			int requiredTime, boolean outside, boolean equipment) {
 		super();
 		this.name = name;
@@ -31,10 +31,10 @@ public class Exercise {
 	public void setMusclePart(String musclePart) {
 		this.musclePart = musclePart;
 	}
-	public double getCalories() {
+	public int getCalories() {
 		return calories;
 	}
-	public void setCalories(double calories) {
+	public void setCalories(int calories) {
 		this.calories = calories;
 	}
 	public int getRequiredTime() {
