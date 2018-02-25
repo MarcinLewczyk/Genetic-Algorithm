@@ -5,48 +5,46 @@ public class Main {
 	public static int populationSize = 5;
 	public static int trainingPlansSize = 6;
 	public static int generations = 100;
-	public static int crossoverChance = 25; // 25%
-	public static double mutationChance = 200;// 20% 
+	public static int crossoverChance = 50; // 25%
+	public static double mutationChance = 10;// 20% 
 	
-	public static int totalCalories = 500; //total amount of calories that user wants to burn
-	public static int totalTime = 30; //wanted training duration
+	public static int totalCalories = 300; //total amount of calories that user wants to burn
+	public static int totalTime = 60; //wanted training duration
 	
 	public static double accuracyPercentage = 1;//accepted accuracy
 	public static int tournamentSize = 3;//tournament selection
 	
-	public static boolean outside = true;
+	public static boolean outside = false;
 	public static boolean equipment = false;
 	
 	public static int outsidePenalty = 50;
 	public static int equipmentPenalty = 50;
 	
-	public static void main(String[] args) {						// crossover nie testowane, bo wymaga ewaluacji
+	public static void main(String[] args) {//to do - need to add stop condition (except generations number)
 		Exercise[] allExercises = createExercises();
 		TrainingPlan[] population = fillPopulation(allExercises);
-		printPopulation(population);
 		
-	/*	for(int i = 0; i < generations; i++) {
+		for(int i = 0; i < generations; i++) {
+			System.out.println(i);
 			int[] trainingPlansPoints = evaluate(population);
-			if(checkStopCondition()) {
+		/*	if(checkStopCondition()) {
 				break;
-			}
-			crossover(population, trainingPlansPoints);
-			trainingPlansPoints = evaluate(population);
-			
-		}*/
-		int[] trainingPlansPoints = evaluate(population);
-		population = crossover(population, trainingPlansPoints);
+			} */
+			population = crossover(population, trainingPlansPoints);	
+			printPopulation(population);
+			population = mutation(population, allExercises);
+			printPopulation(population);
+		//	trainingPlansPoints = evaluate(population);
+		}
+		
 		printPopulation(population);
-		population = mutation(population, allExercises);
-		printPopulation(population);
-		trainingPlansPoints = evaluate(population);
+		printPoints(population);
 	}
 	
 	public static TrainingPlan[] fillPopulation(Exercise[] allExercises) {
 		TrainingPlan[] population = new TrainingPlan[populationSize];
 		for(int i = 0; i < populationSize; i++) {
 			population[i] = initialize(allExercises);
-			//printTrainingPlan(population[i]);
 		}
 		return population;
 	}
@@ -76,27 +74,47 @@ public class Main {
 		return trainingPlan;
 	}
 	
-	public static int[] evaluate(TrainingPlan[] trainingPlan) {//trzeba jakos wymyslic sposob na punktowanie za calokszta³t i poprawic rozmiary tablic
+	public static int[] evaluate(TrainingPlan[] trainingPlans) {
 		int[] evaluation = new int[populationSize];
-		int pointsSum;
+		int pointsSum = 0;
 		int timeSum = 0;
-		double caloriesSum = 0;
-		for(int i = 0; i < evaluation.length; i++) {
-			Exercise exercise = trainingPlan.getExercisesInPlan()[i];
-			pointsSum = 0;
-			caloriesSum += exercise.getCalories();
-			timeSum += exercise.getRequiredTime();
+		int caloriesSum = 0;
+		TrainingPlan trainingPlanToEval;
+		Exercise[] exercisesToEval;
+		Exercise exerciseToEval;
+		for(int i = 0; i < trainingPlans.length; i++) {
+			trainingPlanToEval = trainingPlans[i];
+			exercisesToEval = trainingPlanToEval.getExercisesInPlan();
+			caloriesSum = 0;
+			timeSum = 0;
+			for(int j = 0; j < exercisesToEval.length; j++) {
+				exerciseToEval = exercisesToEval[j];	
+				caloriesSum += exerciseToEval.getCalories();
+				timeSum += exerciseToEval.getRequiredTime();
+				
+				if(!equipment && exerciseToEval.isEquipment()) {
+					pointsSum -= equipmentPenalty;
+				}
 			
-			if(!equipment && exercise.isEquipment()) {
-				pointsSum += equipmentPenalty;
+				if(!outside && exerciseToEval.isOutside()) {
+					pointsSum -= outsidePenalty;
+				}
 			}
-			
-			if(!outside && exercise.isOutside()) {
-				pointsSum += outsidePenalty;
-			}
+			pointsSum += calculatePoints(timeSum, caloriesSum);
 			evaluation[i] = pointsSum;
 		}
 		return evaluation;
+	}
+	
+	public static int calculatePoints(int timeSum, int caloriesSum) {
+		int timePercentage = 0;
+		int caloriesPercentage = 0;
+		int pointsSum = 0;
+		
+		timePercentage = Math.abs((timeSum / totalTime) * 100);
+		caloriesPercentage = Math.abs((caloriesSum / totalCalories) * 100);
+		pointsSum = pointsSum - (timePercentage/100) - (caloriesPercentage/100);
+		return pointsSum;
 	}
 	
 	public static boolean checkStopCondition(int timeSum, int caloriesSum) {
@@ -135,6 +153,7 @@ public class Main {
 						childExercises[j] = secondParentExercises[j];
 					}
 				}
+				child.setExercisesInPlan(childExercises);
 				selectedPopulation[i] = child;
 			} else {
 				selectedPopulation[i] = parent1;
@@ -144,7 +163,7 @@ public class Main {
 	}
 	
 	public static int selection(int[] trainingPlansPoints) {
-		int bestPlanPoints = Integer.MAX_VALUE;
+		int bestPlanPoints = Integer.MIN_VALUE;
 		int bestPlanIndex = 0;
 		for(int i = 0; i < tournamentSize; i++) {
 			int randomPosition = ThreadLocalRandom.current().nextInt(0, populationSize);
@@ -184,6 +203,13 @@ public class Main {
 		Exercise[] toShow = trainingPlan.getExercisesInPlan();
 		for(Exercise e: toShow) {
 			System.out.println(e.getName() + " " + e.getMusclePart());
+		}
+	}
+	
+	public static void printPoints(TrainingPlan[] trainingPlans) {
+		int[] pointsToPrint = evaluate(trainingPlans);
+		for(int i = 0; i < pointsToPrint.length; i++) {
+			System.out.println("Plan " + i + " " + "Points: " + pointsToPrint[i]);
 		}
 	}
 }
