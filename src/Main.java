@@ -3,14 +3,16 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class Main {
 	public static int populationSize = 5;
+	public static int trainingPlansSize = 6;
 	public static int generations = 100;
-	public static double crossoverChance;
-	public static double mutationChance = 200;// 1% chance
+	public static int crossoverChance = 25; // 25%
+	public static double mutationChance = 200;// 20% 
 	
 	public static int totalCalories = 500; //total amount of calories that user wants to burn
 	public static int totalTime = 30; //wanted training duration
 	
 	public static double accuracyPercentage = 1;//accepted accuracy
+	public static int tournamentSize = 3;//tournament selection
 	
 	public static boolean outside = true;
 	public static boolean equipment = false;
@@ -18,12 +20,26 @@ public class Main {
 	public static int outsidePenalty = 50;
 	public static int equipmentPenalty = 50;
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) {						// crossover nie testowane, bo wymaga ewaluacji
 		Exercise[] allExercises = createExercises();
 		TrainingPlan[] population = fillPopulation(allExercises);
 		printPopulation(population);
-		mutation(population, allExercises);
+		
+	/*	for(int i = 0; i < generations; i++) {
+			int[] trainingPlansPoints = evaluate(population);
+			if(checkStopCondition()) {
+				break;
+			}
+			crossover(population, trainingPlansPoints);
+			trainingPlansPoints = evaluate(population);
+			
+		}*/
+		int[] trainingPlansPoints = evaluate(population);
+		population = crossover(population, trainingPlansPoints);
 		printPopulation(population);
+		population = mutation(population, allExercises);
+		printPopulation(population);
+		trainingPlansPoints = evaluate(population);
 	}
 	
 	public static TrainingPlan[] fillPopulation(Exercise[] allExercises) {
@@ -52,15 +68,15 @@ public class Main {
 	
 	public static TrainingPlan initialize(Exercise[] allExercises) {
 		Random randomPosition = new Random();
-		TrainingPlan trainingPlan = new TrainingPlan(populationSize);
-		for(int i = 0; i < populationSize; i++) {
+		TrainingPlan trainingPlan = new TrainingPlan(trainingPlansSize);
+		for(int i = 0; i < trainingPlansSize; i++) {
 			Exercise randomExercise = allExercises[randomPosition.nextInt(allExercises.length)];
 			trainingPlan.addExercise(randomExercise, i);
 		}
 		return trainingPlan;
 	}
 	
-	public static int[] evaluate(TrainingPlan trainingPlan) {//trzeba jakos wymyslic sposob na punktowanie za calokszta³t
+	public static int[] evaluate(TrainingPlan[] trainingPlan) {//trzeba jakos wymyslic sposob na punktowanie za calokszta³t i poprawic rozmiary tablic
 		int[] evaluation = new int[populationSize];
 		int pointsSum;
 		int timeSum = 0;
@@ -83,33 +99,75 @@ public class Main {
 		return evaluation;
 	}
 	
-	public static boolean checkStopCondition(TrainingPlan trainingPlan, int iteration) {
-		boolean condition = false;
-		if(iteration == generations) {
-			condition = true;
+	public static boolean checkStopCondition(int timeSum, int caloriesSum) {
+		int caloriesRange = (int)((accuracyPercentage/100) * totalCalories); 
+		int timeRange = (int)((accuracyPercentage/100) * totalTime);
+		if(checkIfTimeIsInGivenRange(timeSum, timeRange) && checkIfCaloriesIsInGivenRange(caloriesSum, caloriesRange)) {
+			return true;
 		}
-		/*if() {
-			
-		}*/
-		return condition;
+		return false;
 	}
 	
-	public static void crossover() {
-		
+	public static boolean checkIfTimeIsInGivenRange(int timeSum, int range) {
+		return (timeSum < totalTime + range) && (timeSum > totalTime - range);
 	}
 	
-	public static TrainingPlan[] mutation(TrainingPlan[] trainingPlan, Exercise[] allExercises) {
-		TrainingPlan[] mutatedPopulation = new TrainingPlan[trainingPlan.length];
+	public static boolean checkIfCaloriesIsInGivenRange(int caloriesSum, int range) {
+		return (caloriesSum < totalCalories + range) && (caloriesSum > totalCalories - range);
+	}
+	
+	public static TrainingPlan[] crossover(TrainingPlan[] population, int[] trainingPlansPoints) {
+		TrainingPlan[] selectedPopulation = new TrainingPlan[population.length];
+		for(int i = 0; i < selectedPopulation.length; i++) {
+			TrainingPlan parent1 = population[selection(trainingPlansPoints)];
+			int randomCrossoverProb = ThreadLocalRandom.current().nextInt(0, 101);
+			if(randomCrossoverProb <= crossoverChance) {
+				TrainingPlan parent2 = population[selection(trainingPlansPoints)];
+				Exercise[] firstParentExercises = parent1.getExercisesInPlan();
+				Exercise[] secondParentExercises = parent2.getExercisesInPlan();
+				int cuttingPosition = ThreadLocalRandom.current().nextInt(0, trainingPlansSize);
+				TrainingPlan child = new TrainingPlan(trainingPlansSize);
+				Exercise[] childExercises = new Exercise[trainingPlansSize];
+				for(int j = 0; j < trainingPlansSize; j++) {
+					if(j < cuttingPosition) {
+						childExercises[j] = firstParentExercises[j];
+					} else {
+						childExercises[j] = secondParentExercises[j];
+					}
+				}
+				selectedPopulation[i] = child;
+			} else {
+				selectedPopulation[i] = parent1;
+			}
+		}
+		return selectedPopulation;
+	}
+	
+	public static int selection(int[] trainingPlansPoints) {
+		int bestPlanPoints = Integer.MAX_VALUE;
+		int bestPlanIndex = 0;
+		for(int i = 0; i < tournamentSize; i++) {
+			int randomPosition = ThreadLocalRandom.current().nextInt(0, populationSize);
+			if(bestPlanPoints > trainingPlansPoints[randomPosition]) {
+				bestPlanPoints = trainingPlansPoints[randomPosition];
+				bestPlanIndex = randomPosition;
+			}
+		}
+		return bestPlanIndex;
+	}
+	
+	public static TrainingPlan[] mutation(TrainingPlan[] population, Exercise[] allExercises) {
+		TrainingPlan[] mutatedPopulation = new TrainingPlan[population.length];
 		Random randomPosition = new Random();
-		for(int i = 0; i < trainingPlan.length; i++) {
-			Exercise[] exercises = trainingPlan[i].getExercisesInPlan();
+		for(int i = 0; i < population.length; i++) {
+			Exercise[] exercises = population[i].getExercisesInPlan();
 			for(int j = 0; j < exercises.length; j++) {
 				int randomMutationProb = ThreadLocalRandom.current().nextInt(0, 1001); //so chance = 10 is 1%
 				if(mutationChance >= randomMutationProb) {
-					trainingPlan[i].getExercisesInPlan()[j] = allExercises[randomPosition.nextInt(allExercises.length)];
+					population[i].getExercisesInPlan()[j] = allExercises[randomPosition.nextInt(allExercises.length)];
 				}
 			}
-			mutatedPopulation[i] = trainingPlan[i];
+			mutatedPopulation[i] = population[i];
 		}
 		return mutatedPopulation;
 	}
