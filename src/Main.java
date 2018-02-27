@@ -1,10 +1,14 @@
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Main {
 	public static int populationSize = 5;
 	public static int trainingPlansSize = 6;
-	public static int generations = 20;
+	public static int generations = 50;
 	public static int crossoverChance = 50; // 50%
 	public static double mutationChance = 100;// 10% 
 	
@@ -20,34 +24,79 @@ public class Main {
 	public static int outsidePenalty = 10;
 	public static int equipmentPenalty = 10;
 	
+	public static int numberOfAlgorithmLaunches = 10;
+	
 	public static void main(String[] args) {//to do - need to add stop condition (except generations number)
+		String fileName = "Results.txt";
+		File file = new File(fileName);
+		
+		int[] avgBest = new int[generations];
+		int[] avgWorst = new int[generations];
+		int[] avgAvg = new int[generations];
+		
 		Exercise[] allExercises = createExercises();
-		TrainingPlan[] population = fillPopulation(allExercises);
 		
-		for(int i = 0; i < generations; i++) {
-			int[] trainingPlansPoints = evaluate(population);
-		/*	if(checkStopCondition()) {
-				break;
-			} */
-			if(checkStopConditionWithPoints(trainingPlansPoints)) {
-				System.out.println("Stop condition in generation " + i);
-				break;
+		try{
+			FileWriter fileWriter = new FileWriter(file);
+			BufferedWriter bw = new BufferedWriter(fileWriter);  
+			
+			for(int i = 0; i < numberOfAlgorithmLaunches; i++) {
+				
+	    		TrainingPlan[] population = fillPopulation(allExercises);
+				for(int j = 0; j < generations; j++) {
+					int best = Integer.MAX_VALUE;
+			    	int worst = Integer.MIN_VALUE;
+			    	int avg = 0;
+			    	
+					int[] trainingPlansPoints = evaluate(population);
+				/*	if(checkStopConditionWithPoints(trainingPlansPoints)) {
+						System.out.println("Stop condition in generation " + i);
+						break;
+					} */
+					population = crossover(population, trainingPlansPoints);	
+					population = mutation(population, allExercises);
+					trainingPlansPoints = evaluate(population);		
+					
+					int[] bestTab = new int[generations];
+			    	int[] worstTab = new int[generations];
+			    	int[] avgTab = new int[generations];
+					for(int k = 0; k < populationSize; k++){
+		    			if(best > trainingPlansPoints[k]){
+		    				best = trainingPlansPoints[k];
+		    			}
+		    			if(worst < trainingPlansPoints[k]){
+		    				worst = trainingPlansPoints[k];
+		    			}
+		    			avg += trainingPlansPoints[k];
+					}
+			    	avg = avg / trainingPlansPoints.length;
+			    	bestTab[j] = best;
+			    	worstTab[j] = worst;
+			    	avgTab[j] = avg;
+			    	avgBest[j] += bestTab[j];
+			    	avgWorst[j] += worstTab[j];
+			    	avgAvg[j] += avgTab[j];
+				}
+			//	printPopulation(population);
+			//  printPoints(population);
+				printBestPlan(population);
+			
 			}
-			population = crossover(population, trainingPlansPoints);	
-			//printPopulation(population);
-			population = mutation(population, allExercises);
-			trainingPlansPoints = evaluate(population);
-			
-			
-		/*	printBestPlan(population);
-			printPoints(population);
-			*///printPopulation(population);
-			
-		}
-		
-	//	printPopulation(population);
-		//printPoints(population);
-		printBestPlan(population);
+    	
+	    	for(int i = 0; i < generations; i++){
+	    		avgBest[i] = avgBest[i] / numberOfAlgorithmLaunches;
+	    		avgWorst[i] = avgWorst[i] / numberOfAlgorithmLaunches; 
+	    		avgAvg[i] = avgAvg[i] / numberOfAlgorithmLaunches;
+	    		bw.write(avgBest[i] + ",");
+	        	bw.write(avgWorst[i] + ",");
+	        	bw.write(avgAvg[i] + ",");
+	        	bw.newLine();
+	    	}
+	    	bw.close();
+   		}catch(IOException e){
+    		e.printStackTrace();
+    	}
+    	System.out.println("Done");
 	}
 	
 	public static TrainingPlan[] fillPopulation(Exercise[] allExercises) {
@@ -154,7 +203,6 @@ public class Main {
 		double pointsPercentage;
 		for(int i = 0; i < points.length; i++) {
 			pointsPercentage = Math.abs(((double)points[i]/((double)totalCalories + (double)totalTime)) * 100);
-			System.out.println(pointsPercentage + "/" + accuracyPercentage);
 			if(pointsPercentage <= accuracyPercentage) {
 				return true;
 			}
@@ -268,7 +316,7 @@ public class Main {
 				bestIndex = i;
 			}
 		}
-		System.out.println("Najlepszy plan z liczba punktow:  " + points);
+		System.out.println("Best plan with:  " + points + " points");
 		printTrainingPlan(trainingPlans[bestIndex]);
 	}
 }
