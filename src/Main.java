@@ -6,29 +6,29 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Main {
-	public static int populationSize = 5;
-	public static int trainingPlansSize = 6;
-	public static int generations = 50;
-	public static int crossoverChance = 75; // 75%
+	public static int populationSize = 10;
+	public static int trainingPlansSize = 8;
+	public static int generations = 75;
+	public static int crossoverChance = 80; // 80%
 	public static double mutationChance = 5; // 0.5% 
 	
-	public static int totalCalories = 500; //total amount of calories that user wants to burn
+	public static int totalCalories = 600; //total amount of calories that user wants to burn
 	public static int totalTime = 60; //wanted training duration
 	
-	public static double accuracyPercentage = 5; //accepted accuracy
+	public static double accuracyPercentage = 3; //accepted accuracy (it is total accuracy which means ((points from eval)/(totalCalories + totalTime))*100
 	public static int tournamentSize = 3; //tournament selection
 	
-	public static boolean outside = false;
+	public static boolean outside = false;  //false means that we don't want that
 	public static boolean equipment = false;
 	
-	public static int outsidePenalty = 10;
-	public static int equipmentPenalty = 10;
+	public static int outsidePenalty = 30;
+	public static int equipmentPenalty = 30;
 	
 	public static int numberOfAlgorithmLaunches = 10;
 	
 	public static void main(String[] args) {
-		oneIteration();
-	//	multipleIterationsWithFileOutput();
+	//	oneIteration();
+		multipleIterationsWithFileOutput();
 	}
 	
 	public static void oneIteration() {
@@ -171,13 +171,16 @@ public class Main {
 	
 	public static int[] evaluate(TrainingPlan[] trainingPlans) {
 		int[] evaluation = new int[populationSize];
-		int pointsSum = 0;
-		int timeSum = 0;
-		int caloriesSum = 0;
 		TrainingPlan trainingPlanToEval;
 		Exercise[] exercisesToEval;
 		Exercise exerciseToEval;
+		int pointsSum = 0;
+		int timeSum = 0;
+		int caloriesSum = 0;
 		for(int i = 0; i < trainingPlans.length; i++) {
+			pointsSum = 0;
+			timeSum = 0;
+			caloriesSum = 0;
 			trainingPlanToEval = trainingPlans[i];
 			exercisesToEval = trainingPlanToEval.getExercisesInPlan();
 			caloriesSum = 0;
@@ -324,13 +327,19 @@ public class Main {
 		int[] plansPoints = evaluate(trainingPlans);
 		int bestIndex = 0;
 		int points = Integer.MIN_VALUE;
+		int totalTime = 0;
+		int totalCalories = 0;
 		for(int i = 0; i <plansPoints.length; i++) {
 			if(plansPoints[i] > points) {
 				points = plansPoints[i];
 				bestIndex = i;
 			}
 		}
-		System.out.println("Best plan with:  " + points + " points");
+		for(Exercise e: trainingPlans[bestIndex].getExercisesInPlan()) {
+			totalTime += e.getRequiredTime();
+			totalCalories += e.getCalories();
+		}
+		System.out.println("Best plan with:  " + points + " points, " + totalTime + " minutes, " + totalCalories + " calories.");
 		printTrainingPlan(trainingPlans[bestIndex]);
 	}
 }
