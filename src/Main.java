@@ -9,14 +9,14 @@ public class Main {
 	public static int populationSize = 5;
 	public static int trainingPlansSize = 6;
 	public static int generations = 50;
-	public static int crossoverChance = 50; // 50%
-	public static double mutationChance = 100;// 10% 
+	public static int crossoverChance = 75; // 75%
+	public static double mutationChance = 5; // 0.5% 
 	
-	public static int totalCalories = 300; //total amount of calories that user wants to burn
+	public static int totalCalories = 500; //total amount of calories that user wants to burn
 	public static int totalTime = 60; //wanted training duration
 	
-	public static double accuracyPercentage = 5;//accepted accuracy
-	public static int tournamentSize = 3;//tournament selection
+	public static double accuracyPercentage = 5; //accepted accuracy
+	public static int tournamentSize = 3; //tournament selection
 	
 	public static boolean outside = false;
 	public static boolean equipment = false;
@@ -26,7 +26,30 @@ public class Main {
 	
 	public static int numberOfAlgorithmLaunches = 10;
 	
-	public static void main(String[] args) {//to do - need to add stop condition (except generations number)
+	public static void main(String[] args) {
+		oneIteration();
+	//	multipleIterationsWithFileOutput();
+	}
+	
+	public static void oneIteration() {
+		Exercise[] allExercises = createExercises();
+		TrainingPlan[] population = fillPopulation(allExercises);
+		for(int i = 0; i < generations; i++) {	
+			int[] trainingPlansPoints = evaluate(population);
+			if(checkStopConditionWithPoints(trainingPlansPoints)) {
+				System.out.println("Stop condition in generation " + i);
+				break;
+			}
+			population = crossover(population, trainingPlansPoints);	
+			population = mutation(population, allExercises);
+			trainingPlansPoints = evaluate(population);		
+		}
+		printPopulation(population);
+		printPoints(population);
+		printBestPlan(population);
+	}
+	
+	public static void multipleIterationsWithFileOutput() {
 		String fileName = "Results.txt";
 		File file = new File(fileName);
 		
@@ -40,8 +63,7 @@ public class Main {
 			FileWriter fileWriter = new FileWriter(file);
 			BufferedWriter bw = new BufferedWriter(fileWriter);  
 			
-			for(int i = 0; i < numberOfAlgorithmLaunches; i++) {
-				
+			for(int i = 0; i < numberOfAlgorithmLaunches; i++) {			
 	    		TrainingPlan[] population = fillPopulation(allExercises);
 				for(int j = 0; j < generations; j++) {
 					int best = Integer.MAX_VALUE;
@@ -49,10 +71,6 @@ public class Main {
 			    	int avg = 0;
 			    	
 					int[] trainingPlansPoints = evaluate(population);
-				/*	if(checkStopConditionWithPoints(trainingPlansPoints)) {
-						System.out.println("Stop condition in generation " + i);
-						break;
-					} */
 					population = crossover(population, trainingPlansPoints);	
 					population = mutation(population, allExercises);
 					trainingPlansPoints = evaluate(population);		
@@ -76,13 +94,9 @@ public class Main {
 			    	avgBest[j] += bestTab[j];
 			    	avgWorst[j] += worstTab[j];
 			    	avgAvg[j] += avgTab[j];
-				}
-			//	printPopulation(population);
-			//  printPoints(population);
-				printBestPlan(population);
-			
+				}		
 			}
-    	
+  
 	    	for(int i = 0; i < generations; i++){
 	    		avgBest[i] = avgBest[i] / numberOfAlgorithmLaunches;
 	    		avgWorst[i] = avgWorst[i] / numberOfAlgorithmLaunches; 
@@ -109,39 +123,39 @@ public class Main {
 	
 	public static Exercise[] createExercises() {
 		Exercise[] exercises = new Exercise[30];
-		exercises[0] = new Exercise("Ex1", "Legs", 10, 5, false, false);
-		exercises[1] = new Exercise("Ex2", "Legs", 25, 15, true, false);
-		exercises[2] = new Exercise("Ex3", "Chest", 30, 6, true, true);
-		exercises[3] = new Exercise("Ex4", "Chest", 12, 8, false, true);
-		exercises[4] = new Exercise("Ex5", "Arms", 8, 5, true, false);
-		exercises[5] = new Exercise("Ex6", "Arms", 15, 10, false, false);
-		exercises[6] = new Exercise("Ex7", "Back", 16, 20, false, false);
-		exercises[7] = new Exercise("Ex8", "Back", 25, 5, false, true);
-		exercises[8] = new Exercise("Ex9", "Shoulders", 35, 10, true, false);
-		exercises[9] = new Exercise("Ex10", "Shoulders", 15, 7, false, false);
+		exercises[0] = new Exercise("Kettlebell swing - 5 mins", "arms", 100, 5, false, true);
+		exercises[1] = new Exercise("Indoor rowing - 5 mins", "whole body", 60, 5, false, true);
+		exercises[2] = new Exercise("Kettlebell swing - 10 mins", "arms", 200, 10, false, true);
+		exercises[3] = new Exercise("Indoor rowing - 10 mins", "whole body", 120, 10, false, true);
+		exercises[4] = new Exercise("Burpees - 3 mins", "cardio", 42, 3, false, false);
+		exercises[5] = new Exercise("Burpees - 10 mins", "cardio", 143, 10, false, false);
+		exercises[6] = new Exercise("Airdyne bike sprints - 1 min", "cardio", 87, 1, false, true);
+		exercises[7] = new Exercise("Airdyne bike sprints - 5 mins", "cardio", 435, 5, false, true);
+		exercises[8] = new Exercise("Jumping rope - 5 mins", "cardio", 65, 5, false, true);
+		exercises[9] = new Exercise("Jumping rope - 2 mins", "cardio", 26, 2, false, true);
 		
-		exercises[10] = new Exercise("Ex11", "Legs", 5, 5, false, false);
-		exercises[11] = new Exercise("Ex12", "Legs", 16, 15, false, false);
-		exercises[12] = new Exercise("Ex13", "Chest", 5, 6, false, false);
-		exercises[13] = new Exercise("Ex14", "Chest", 25, 8, false, false);
-		exercises[14] = new Exercise("Ex15", "Arms", 15, 5, false, false);
-		exercises[15] = new Exercise("Ex16", "Arms", 13, 10, false, false);
-		exercises[16] = new Exercise("Ex17", "Back", 16, 20, false, false);
-		exercises[17] = new Exercise("Ex18", "Back", 25, 5, false, false);
-		exercises[18] = new Exercise("Ex19", "Shoulders", 26, 10, false, false);
-		exercises[19] = new Exercise("Ex20", "Shoulders", 27, 7, false, false);
+		exercises[10] = new Exercise("Fat-tire biking - 10 mins", "cardio", 250, 10, true, true);
+		exercises[11] = new Exercise("Fat-tire biking - 20 mins", "cardio", 500, 20, true, true);
+		exercises[12] = new Exercise("Fat-tire biking - 30 mins", "cardio", 750, 30, true, true);
+		exercises[13] = new Exercise("CINDY - crossfit - 10 mins", "cardio", 130, 10, false, false);
+		exercises[14] = new Exercise("CINDY - crossfit - 20 mins", "cardio", 260, 20, false, false);
+		exercises[15] = new Exercise("CINDY - crossfit - 5 mins", "cardio", 65, 5, false, false);
+		exercises[16] = new Exercise("Cross-country skiing - 15 mins", "cardio", 180, 15, true, true);
+		exercises[17] = new Exercise("Cross-country skiing - 20 mins", "cardio", 300, 20, true, true);
+		exercises[18] = new Exercise("Cross-country skiing - 30 mins", "cardio", 450, 30, true, true);
+		exercises[19] = new Exercise("Tabata jump squats - 2 mins", "cardio", 26, 2, false, false);
 		
-		exercises[20] = new Exercise("Ex21", "Legs", 22, 3, true, true);
-		exercises[21] = new Exercise("Ex22", "Legs", 12, 3, true, false);
-		exercises[22] = new Exercise("Ex23", "Chest", 17, 6, true, true);
-		exercises[23] = new Exercise("Ex24", "Chest", 18, 6, false, true);
-		exercises[24] = new Exercise("Ex25", "Arms", 8, 7, true, false);
-		exercises[25] = new Exercise("Ex26", "Arms", 7, 7, false, false);
-		exercises[26] = new Exercise("Ex27", "Back", 19, 10, false, false);
-		exercises[27] = new Exercise("Ex28", "Back", 22, 10, false, true);
-		exercises[28] = new Exercise("Ex29", "Shoulders", 25, 8, true, false);
-		exercises[29] = new Exercise("Ex30", "Shoulders", 19, 8, false, false);
-		
+		exercises[20] = new Exercise("Tabata jump squats - 1 min", "cardio", 13, 1, false, false);
+		exercises[21] = new Exercise("Tabata jump squats - 3 mins", "cardio", 39, 3, false, false);
+		exercises[22] = new Exercise("Tabata jump squats - 5 mins", "cardio", 65, 5, false, false);
+		exercises[23] = new Exercise("Battling ropes - 2 mins", "cardio", 20, 2, false, true);
+		exercises[24] = new Exercise("Battling ropes - 3 mins", "cardio", 30, 3, false, true);
+		exercises[25] = new Exercise("Battling ropes - 4 mins", "cardio", 40, 4, false, true);
+		exercises[26] = new Exercise("Battling ropes - 5 mins", "cardio", 50, 5, false, true);
+		exercises[27] = new Exercise("Battling ropes - 6 mins", "cardio", 60, 6, false, true);
+		exercises[28] = new Exercise("Battling ropes - 10 mins", "cardio", 100, 10, false, true);
+		exercises[29] = new Exercise("Battling ropes - 15 mins", "cardio", 150, 15, false, true);
+	
 		return exercises;
 	}
 	
