@@ -11,7 +11,7 @@ public class Main {
 	public static int trainingPlansSize = 8;
 	public static int generations = 75;
 	public static int crossoverChance = 80; // 80%
-	public static double mutationChance = 5; // 0.5% 
+	public static double mutationChance = 50; // 5% 
 	
 	public static int totalCalories = 600; //total amount of calories that user wants to burn
 	public static int totalTime = 60; //wanted training duration
@@ -254,14 +254,14 @@ public class Main {
 	public static TrainingPlan[] crossover(TrainingPlan[] population, int[] trainingPlansPoints) {
 		TrainingPlan[] selectedPopulation = new TrainingPlan[population.length];
 		for(int i = 0; i < selectedPopulation.length; i++) {
-		//	TrainingPlan parent1 = population[tournament(trainingPlansPoints)];
+			TrainingPlan parent1 = population[tournament(trainingPlansPoints)];
 		//	TrainingPlan parent1 = population[roullete(trainingPlansPoints)];
-			TrainingPlan parent1 = population[ranking(trainingPlansPoints)];		
+		//	TrainingPlan parent1 = population[ranking(trainingPlansPoints)];		
 			int randomCrossoverProb = ThreadLocalRandom.current().nextInt(0, 101);
 			if(randomCrossoverProb <= crossoverChance) {
-			//	TrainingPlan parent2 = population[tournament(trainingPlansPoints)];
+				TrainingPlan parent2 = population[tournament(trainingPlansPoints)];
 			//	TrainingPlan parent2 = population[roullete(trainingPlansPoints)];	
-				TrainingPlan parent2 = population[ranking(trainingPlansPoints)];		
+			//	TrainingPlan parent2 = population[ranking(trainingPlansPoints)];		
 				Exercise[] firstParentExercises = parent1.getExercisesInPlan();
 				Exercise[] secondParentExercises = parent2.getExercisesInPlan();
 				int cuttingPosition = ThreadLocalRandom.current().nextInt(0, trainingPlansSize);
