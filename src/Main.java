@@ -2,14 +2,14 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Arrays;
+
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Main {
-	public static int populationSize = 10;
+	public static int populationSize = 10; //10
 	public static int trainingPlansSize = 8;
-	public static int generations = 75;
+	public static int generations = 75; //75 
 	public static int crossoverChance = 80; // 80%
 	public static double mutationChance = 50; // 5% 
 	
@@ -36,6 +36,7 @@ public class Main {
 	//	System.out.println(ranking(test));
 		oneIteration();
 	//	multipleIterationsWithFileOutput();
+	
 	}
 	
 	public static void oneIteration() {
@@ -43,20 +44,26 @@ public class Main {
 		TrainingPlan[] population = fillPopulation(allExercises);
 		for(int i = 0; i < generations; i++) {	
 			int[] trainingPlansPoints = evaluate(population);
-			if(checkStopConditionWithPoints(trainingPlansPoints)) {
+	/*		if(checkStopConditionWithPoints(trainingPlansPoints)) {
 				System.out.println("Stop condition in generation " + i);
 				break;
-			}
+			}  */
 //			population = crossover(population, trainingPlansPoints);	
 	//		population = twoPointsCrossoverWithThreeParents(population, trainingPlansPoints);	
 			population = twoPointsCrossover(population, trainingPlansPoints);	
 
 			population = mutation(population, allExercises);
+		
+			
+	//		population = inversion(population);
+			
+			
 			trainingPlansPoints = evaluate(population);		
+			System.out.println("Generation " + i);
 		}
-		printPopulation(population);
-		printPoints(population);
-		printBestPlan(population);
+	//	printPopulation(population);
+	//	printPoints(population);
+	//	printBestPlan(population);
 	}
 	
 	public static void multipleIterationsWithFileOutput() {
@@ -481,6 +488,39 @@ public class Main {
 			mutatedPopulation[i] = population[i];
 		}
 		return mutatedPopulation;
+	}
+	
+	public static TrainingPlan[] inversion(TrainingPlan[] population) {
+		for(int i = 0; i < population.length; i++) {
+			Exercise[] exercises = population[i].getExercisesInPlan();
+			int firstPosition = ThreadLocalRandom.current().nextInt(0, exercises.length);
+			int secondPosition = ThreadLocalRandom.current().nextInt(0, exercises.length);
+			while(!(firstPosition < secondPosition)) {
+				secondPosition = ThreadLocalRandom.current().nextInt(0, exercises.length);
+			}
+			Exercise[] partToInvert = new Exercise[secondPosition - firstPosition + 1];
+			for(int j = 0; j < secondPosition - firstPosition + 1; j++) {
+				partToInvert[j] = exercises[firstPosition + j];
+			}
+			Exercise[] inverted = reverseExercisesArray(partToInvert);
+			int k = 0;
+			for(int j = firstPosition; j <= secondPosition; j++) {
+				exercises[j] = inverted[k];
+				k++;
+			}		
+			population[i].setExercisesInPlan(exercises);
+		}
+		return population;
+	}
+	
+	public static Exercise[] reverseExercisesArray(Exercise[] exercises) {
+		Exercise[] inverted = new Exercise[exercises.length];
+		int j = 0;
+		for(int i = exercises.length - 1; i >= 0; i--) {
+			inverted[i] = exercises[j];
+			j++;
+		}
+		return inverted;
 	}
 	
 	public static void printPopulation(TrainingPlan[] population) {
