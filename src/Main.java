@@ -42,21 +42,21 @@ public class Main {
 	public static void oneIteration() {
 		Exercise[] allExercises = createExercises();
 		TrainingPlan[] population = fillPopulation(allExercises);
+		int[] trainingPlansPoints; 
 		for(int i = 0; i < generations; i++) {	
-			int[] trainingPlansPoints = evaluate(population);
+			trainingPlansPoints = evaluate(population);
 	/*		if(checkStopConditionWithPoints(trainingPlansPoints)) {
 				System.out.println("Stop condition in generation " + i);
 				break;
 			}  */
-//			population = crossover(population, trainingPlansPoints);	
+	//		population = crossover(population, trainingPlansPoints);	
 	//		population = twoPointsCrossoverWithThreeParents(population, trainingPlansPoints);	
 			population = twoPointsCrossover(population, trainingPlansPoints);	
 
 			population = mutation(population, allExercises);
 		
 			
-	//		population = inversion(population);
-			
+			population = inversion(population);
 			
 			trainingPlansPoints = evaluate(population);		
 			System.out.println("Generation " + i);
@@ -90,6 +90,7 @@ public class Main {
 					int[] trainingPlansPoints = evaluate(population);
 					population = crossover(population, trainingPlansPoints);	
 					population = mutation(population, allExercises);
+					population = inversion(population);
 					trainingPlansPoints = evaluate(population);		
 					
 					int[] bestTab = new int[generations];
@@ -493,10 +494,10 @@ public class Main {
 	public static TrainingPlan[] inversion(TrainingPlan[] population) {
 		for(int i = 0; i < population.length; i++) {
 			Exercise[] exercises = population[i].getExercisesInPlan();
-			int firstPosition = ThreadLocalRandom.current().nextInt(0, exercises.length);
-			int secondPosition = ThreadLocalRandom.current().nextInt(0, exercises.length);
-			while(!(firstPosition < secondPosition)) {
-				secondPosition = ThreadLocalRandom.current().nextInt(0, exercises.length);
+			int secondPosition = ThreadLocalRandom.current().nextInt(1, exercises.length);
+			int firstPosition = ThreadLocalRandom.current().nextInt(0, secondPosition + 1);
+			while(firstPosition >= secondPosition) {
+				firstPosition = ThreadLocalRandom.current().nextInt(0, secondPosition + 1);
 			}
 			Exercise[] partToInvert = new Exercise[secondPosition - firstPosition + 1];
 			for(int j = 0; j < secondPosition - firstPosition + 1; j++) {
