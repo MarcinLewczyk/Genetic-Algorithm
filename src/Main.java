@@ -47,7 +47,10 @@ public class Main {
 				System.out.println("Stop condition in generation " + i);
 				break;
 			}
-			population = crossover(population, trainingPlansPoints);	
+//			population = crossover(population, trainingPlansPoints);	
+	//		population = twoPointsCrossoverWithThreeParents(population, trainingPlansPoints);	
+			population = twoPointsCrossover(population, trainingPlansPoints);	
+
 			population = mutation(population, allExercises);
 			trainingPlansPoints = evaluate(population);		
 		}
@@ -282,14 +285,106 @@ public class Main {
 		}
 		return selectedPopulation;
 	}
-	//to-do ------------------------------------------------------------------------------------------
+	
 	public static TrainingPlan[] twoPointsCrossover(TrainingPlan[] population, int[] trainingPlansPoints) {
 		TrainingPlan[] selectedPopulation = new TrainingPlan[population.length];
+		for(int i = 0; i < selectedPopulation.length; i++) {
+			TrainingPlan parent1 = population[tournament(trainingPlansPoints)];
+		//	TrainingPlan parent1 = population[roullete(trainingPlansPoints)];
+		//	TrainingPlan parent1 = population[ranking(trainingPlansPoints)];		
+			int randomCrossoverProb = ThreadLocalRandom.current().nextInt(0, 101);
+			if(randomCrossoverProb <= crossoverChance) {
+				TrainingPlan parent2 = population[tournament(trainingPlansPoints)];
+			//	TrainingPlan parent2 = population[roullete(trainingPlansPoints)];	
+			//	TrainingPlan parent2 = population[ranking(trainingPlansPoints)];		
+				Exercise[] firstParentExercises = parent1.getExercisesInPlan();
+				Exercise[] secondParentExercises = parent2.getExercisesInPlan();
+				int cuttingPosition = ThreadLocalRandom.current().nextInt(0, trainingPlansSize);
+				int secondCuttingPosition = ThreadLocalRandom.current().nextInt(0, trainingPlansSize);
+				while(secondCuttingPosition == cuttingPosition) {
+					secondCuttingPosition = ThreadLocalRandom.current().nextInt(0, trainingPlansSize);
+				}
+				TrainingPlan child = new TrainingPlan(trainingPlansSize);
+				Exercise[] childExercises = new Exercise[trainingPlansSize];
+				for(int j = 0; j < trainingPlansSize; j++) {
+					if(cuttingPosition < secondCuttingPosition) {
+						if(j < cuttingPosition) {
+							childExercises[j] = firstParentExercises[j];
+						} else if(j > cuttingPosition && j < secondCuttingPosition){
+							childExercises[j] = secondParentExercises[j];
+						} else {
+							childExercises[j] = firstParentExercises[j];
+						}				
+					} else {
+						if(j > cuttingPosition) {
+							childExercises[j] = firstParentExercises[j];
+						} else if(j < cuttingPosition && j > secondCuttingPosition){
+							childExercises[j] = secondParentExercises[j];
+						} else {
+							childExercises[j] = firstParentExercises[j];
+						}
+					}
+				}
+				child.setExercisesInPlan(childExercises);
+				selectedPopulation[i] = child;
+			} else {
+				selectedPopulation[i] = parent1;
+			}
+		}	
 		return selectedPopulation;
 	}
-	//to-do ------------------------------------------------------------------------------------------
-	public static TrainingPlan[] multiplePointsCrossover(TrainingPlan[] population, int[] trainingPlansPoints) {
+	
+	public static TrainingPlan[] twoPointsCrossoverWithThreeParents(TrainingPlan[] population, int[] trainingPlansPoints) {
 		TrainingPlan[] selectedPopulation = new TrainingPlan[population.length];
+		for(int i = 0; i < selectedPopulation.length; i++) {
+			TrainingPlan parent1 = population[tournament(trainingPlansPoints)];
+		//	TrainingPlan parent1 = population[roullete(trainingPlansPoints)];
+		//	TrainingPlan parent1 = population[ranking(trainingPlansPoints)];		
+			int randomCrossoverProb = ThreadLocalRandom.current().nextInt(0, 101);
+			if(randomCrossoverProb <= crossoverChance) {
+				TrainingPlan parent2 = population[tournament(trainingPlansPoints)];
+			//	TrainingPlan parent2 = population[roullete(trainingPlansPoints)];	
+			//	TrainingPlan parent2 = population[ranking(trainingPlansPoints)];
+				TrainingPlan parent3 = population[tournament(trainingPlansPoints)];
+			//	TrainingPlan parent3 = population[roullete(trainingPlansPoints)];	
+			//	TrainingPlan parent3 = population[ranking(trainingPlansPoints)];
+				
+				Exercise[] firstParentExercises = parent1.getExercisesInPlan();
+				Exercise[] secondParentExercises = parent2.getExercisesInPlan();
+				Exercise[] thirdParentExercises = parent3.getExercisesInPlan();
+				
+				int cuttingPosition = ThreadLocalRandom.current().nextInt(0, trainingPlansSize);
+				int secondCuttingPosition = ThreadLocalRandom.current().nextInt(0, trainingPlansSize);
+				while(secondCuttingPosition == cuttingPosition) {
+					secondCuttingPosition = ThreadLocalRandom.current().nextInt(0, trainingPlansSize);
+				}
+				TrainingPlan child = new TrainingPlan(trainingPlansSize);
+				Exercise[] childExercises = new Exercise[trainingPlansSize];
+				for(int j = 0; j < trainingPlansSize; j++) {
+					if(cuttingPosition < secondCuttingPosition) {
+						if(j < cuttingPosition) {
+							childExercises[j] = firstParentExercises[j];
+						} else if(j > cuttingPosition && j < secondCuttingPosition){
+							childExercises[j] = secondParentExercises[j];
+						} else {
+							childExercises[j] = thirdParentExercises[j];
+						}				
+					} else {
+						if(j > cuttingPosition) {
+							childExercises[j] = firstParentExercises[j];
+						} else if(j < cuttingPosition && j > secondCuttingPosition){
+							childExercises[j] = secondParentExercises[j];
+						} else {
+							childExercises[j] = thirdParentExercises[j];
+						}
+					}
+				}
+				child.setExercisesInPlan(childExercises);
+				selectedPopulation[i] = child;
+			} else {
+				selectedPopulation[i] = parent1;
+			}
+		}	
 		return selectedPopulation;
 	}
 	
