@@ -22,6 +22,9 @@ public class Main {
 	public static boolean outside = false;  //false means that we don't want that
 	public static boolean equipment = false;
 	
+	public static boolean elite = true; // it is getting the best plan due to tournament on whole population and then passing it to random position in the 
+										// new population after this population was crossovered and mutated
+	
 	public static int outsidePenalty = 30;
 	public static int equipmentPenalty = 30;
 	
@@ -33,6 +36,7 @@ public class Main {
 		for(int i: result) {
 			System.out.println(i);
 		}*/
+	//	System.out.println("best index " + tournament(test, test.length));
 	//	System.out.println(ranking(test));
 		oneIteration();
 	//	multipleIterationsWithFileOutput();
@@ -42,6 +46,7 @@ public class Main {
 	public static void oneIteration() {
 		Exercise[] allExercises = createExercises();
 		TrainingPlan[] population = fillPopulation(allExercises);
+		TrainingPlan eliteParent = null;
 		int[] trainingPlansPoints; 
 		for(int i = 0; i < generations; i++) {	
 			trainingPlansPoints = evaluate(population);
@@ -49,17 +54,26 @@ public class Main {
 				System.out.println("Stop condition in generation " + i);
 				break;
 			}  */
+			if(elite) {
+				eliteParent = population[tournament(trainingPlansPoints, population.length)];
+				System.out.println("elite index: " + tournament(trainingPlansPoints, population.length));
+			}
 	//		population = crossover(population, trainingPlansPoints);	
 	//		population = twoPointsCrossoverWithThreeParents(population, trainingPlansPoints);	
 			population = twoPointsCrossover(population, trainingPlansPoints);	
 
 			population = mutation(population, allExercises);
 		
-			
-			population = inversion(population);
+		//	population = inversion(population);
+		
+			if(elite) {
+				int randomToThrow = ThreadLocalRandom.current().nextInt(0, population.length); 
+				population[randomToThrow] = eliteParent;
+			}
 			
 			trainingPlansPoints = evaluate(population);		
 			System.out.println("Generation " + i);
+			printBestPlan(population);
 		}
 	//	printPopulation(population);
 	//	printPoints(population);
@@ -82,15 +96,23 @@ public class Main {
 			
 			for(int i = 0; i < numberOfAlgorithmLaunches; i++) {			
 	    		TrainingPlan[] population = fillPopulation(allExercises);
-				for(int j = 0; j < generations; j++) {
+	    		TrainingPlan eliteParent = null;
+	    		for(int j = 0; j < generations; j++) {
 					int best = Integer.MAX_VALUE;
 			    	int worst = Integer.MIN_VALUE;
 			    	int avg = 0;
 			    	
 					int[] trainingPlansPoints = evaluate(population);
+					if(elite) {
+						eliteParent = population[tournament(trainingPlansPoints, population.length)];
+					}
 					population = crossover(population, trainingPlansPoints);	
 					population = mutation(population, allExercises);
 					population = inversion(population);
+					if(elite) {
+						int randomToThrow = ThreadLocalRandom.current().nextInt(0, population.length); 
+						population[randomToThrow] = eliteParent;
+					}
 					trainingPlansPoints = evaluate(population);		
 					
 					int[] bestTab = new int[generations];
@@ -265,12 +287,12 @@ public class Main {
 	public static TrainingPlan[] crossover(TrainingPlan[] population, int[] trainingPlansPoints) {
 		TrainingPlan[] selectedPopulation = new TrainingPlan[population.length];
 		for(int i = 0; i < selectedPopulation.length; i++) {
-			TrainingPlan parent1 = population[tournament(trainingPlansPoints)];
+			TrainingPlan parent1 = population[tournament(trainingPlansPoints, tournamentSize)];
 		//	TrainingPlan parent1 = population[roullete(trainingPlansPoints)];
 		//	TrainingPlan parent1 = population[ranking(trainingPlansPoints)];		
 			int randomCrossoverProb = ThreadLocalRandom.current().nextInt(0, 101);
 			if(randomCrossoverProb <= crossoverChance) {
-				TrainingPlan parent2 = population[tournament(trainingPlansPoints)];
+				TrainingPlan parent2 = population[tournament(trainingPlansPoints, tournamentSize)];
 			//	TrainingPlan parent2 = population[roullete(trainingPlansPoints)];	
 			//	TrainingPlan parent2 = population[ranking(trainingPlansPoints)];		
 				Exercise[] firstParentExercises = parent1.getExercisesInPlan();
@@ -297,12 +319,12 @@ public class Main {
 	public static TrainingPlan[] twoPointsCrossover(TrainingPlan[] population, int[] trainingPlansPoints) {
 		TrainingPlan[] selectedPopulation = new TrainingPlan[population.length];
 		for(int i = 0; i < selectedPopulation.length; i++) {
-			TrainingPlan parent1 = population[tournament(trainingPlansPoints)];
+			TrainingPlan parent1 = population[tournament(trainingPlansPoints, tournamentSize)];
 		//	TrainingPlan parent1 = population[roullete(trainingPlansPoints)];
 		//	TrainingPlan parent1 = population[ranking(trainingPlansPoints)];		
 			int randomCrossoverProb = ThreadLocalRandom.current().nextInt(0, 101);
 			if(randomCrossoverProb <= crossoverChance) {
-				TrainingPlan parent2 = population[tournament(trainingPlansPoints)];
+				TrainingPlan parent2 = population[tournament(trainingPlansPoints, tournamentSize)];
 			//	TrainingPlan parent2 = population[roullete(trainingPlansPoints)];	
 			//	TrainingPlan parent2 = population[ranking(trainingPlansPoints)];		
 				Exercise[] firstParentExercises = parent1.getExercisesInPlan();
@@ -345,15 +367,15 @@ public class Main {
 	public static TrainingPlan[] twoPointsCrossoverWithThreeParents(TrainingPlan[] population, int[] trainingPlansPoints) {
 		TrainingPlan[] selectedPopulation = new TrainingPlan[population.length];
 		for(int i = 0; i < selectedPopulation.length; i++) {
-			TrainingPlan parent1 = population[tournament(trainingPlansPoints)];
+			TrainingPlan parent1 = population[tournament(trainingPlansPoints, tournamentSize)];
 		//	TrainingPlan parent1 = population[roullete(trainingPlansPoints)];
 		//	TrainingPlan parent1 = population[ranking(trainingPlansPoints)];		
 			int randomCrossoverProb = ThreadLocalRandom.current().nextInt(0, 101);
 			if(randomCrossoverProb <= crossoverChance) {
-				TrainingPlan parent2 = population[tournament(trainingPlansPoints)];
+				TrainingPlan parent2 = population[tournament(trainingPlansPoints, tournamentSize)];
 			//	TrainingPlan parent2 = population[roullete(trainingPlansPoints)];	
 			//	TrainingPlan parent2 = population[ranking(trainingPlansPoints)];
-				TrainingPlan parent3 = population[tournament(trainingPlansPoints)];
+				TrainingPlan parent3 = population[tournament(trainingPlansPoints, tournamentSize)];
 			//	TrainingPlan parent3 = population[roullete(trainingPlansPoints)];	
 			//	TrainingPlan parent3 = population[ranking(trainingPlansPoints)];
 				
@@ -396,14 +418,21 @@ public class Main {
 		return selectedPopulation;
 	}
 	
-	public static int tournament(int[] trainingPlansPoints) {
+	public static int tournament(int[] trainingPlansPoints, int tournamentSize) {
 		int bestPlanPoints = Integer.MIN_VALUE;
 		int bestPlanIndex = 0;
 		for(int i = 0; i < tournamentSize; i++) {
-			int randomPosition = ThreadLocalRandom.current().nextInt(0, populationSize);
-			if(trainingPlansPoints[randomPosition] > bestPlanPoints) {
-				bestPlanPoints = trainingPlansPoints[randomPosition];
-				bestPlanIndex = randomPosition;
+			if(elite) {
+				if(trainingPlansPoints[i] > bestPlanPoints) {
+					bestPlanPoints = trainingPlansPoints[i];
+					bestPlanIndex = i;
+				}
+			} else {
+				int randomPosition = ThreadLocalRandom.current().nextInt(0, populationSize);
+				if(trainingPlansPoints[randomPosition] > bestPlanPoints) {
+					bestPlanPoints = trainingPlansPoints[randomPosition];
+					bestPlanIndex = randomPosition;
+				}
 			}
 		}
 		return bestPlanIndex;
@@ -468,11 +497,6 @@ public class Main {
 			}
 		}
 		return rankPoints;
-	}
-	
-	//to-do ------------------------------------------------------------------------------------------
-	public static int elite() {
-		return 0;
 	}
 	
 	public static TrainingPlan[] mutation(TrainingPlan[] population, Exercise[] allExercises) {
