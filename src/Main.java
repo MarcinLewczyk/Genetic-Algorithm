@@ -32,7 +32,7 @@ public class Main {
 	public static int numberOfAlgorithmLaunches = 10;
 	
 	public static void main(String[] args) {
-		int[] test = {-5, -7, -13, -1, -6, -1};
+	//	int[] test = {-5, -7, -13, -1, -6, -1};
 	/*	int[] result = getBestSolutions(test);
 		for(int i: result) {
 			System.out.println(i);
@@ -49,42 +49,26 @@ public class Main {
 	public static int numOfEliteSolutions = 2; //e
 	public static int nsp = 2;
 	public static int nep = 4;
+	public static int iterations = 75;
 	
 	public static void startBees() {
 		Exercise[] allExercises = createExercises();
 		TrainingPlan[] population = fillPopulation(allExercises);
 		int[] trainingPlansPoints;
-		trainingPlansPoints = evaluate(population);
-		TrainingPlan globalBest = population[getBestPlanIndex(trainingPlansPoints)];
-		DoubleTable doubleTable = getEliteAndRestSolutions(trainingPlansPoints, population);
-		TrainingPlan[] eliteSolutions = doubleTable.getEliteSolutions();
-		TrainingPlan[] restSolutions = doubleTable.getRestSolutions();
-		System.out.println(eliteSolutions.length + " " + restSolutions.length);
-		printPoints(eliteSolutions);
-		System.out.println(" ----------- ");
-		printPoints(restSolutions);
-		System.out.println(" ----------- ");
-		printPopulation(eliteSolutions);
-		System.out.println(" ----------- ");
-		TrainingPlan[] mutatedElite = kMutation(eliteSolutions, allExercises);
-		System.out.println(mutatedElite.length);
-		printPopulation(mutatedElite);
-		System.out.println(" ----------- ");
-		TrainingPlan[] mutatedRest = kMutation(restSolutions, allExercises);
-		System.out.println(mutatedRest.length);
-		printPopulation(mutatedRest);
-		//printPoints(mutatedElite);
-	/*	for(int i = 0; i < generations; i++) {
-			trainingPlansPoints = evaluate(population);		
-			TrainingPlan[] bestSolutionsPositions = getBestSolutions(trainingPlansPoints, population); // M
-			TrainingPlan[] eliteSolutionsPositions = getEliteSolutions(bestSolutionsPositions, population); //EL
-			bestSolutionsPositions = ;
-			
-		}*/
-		
+		for(int i = 0; i < iterations; i++) {
+			trainingPlansPoints = evaluate(population);
+			TrainingPlan globalBest = population[getBestPlanIndex(trainingPlansPoints)];
+			DoubleTable doubleTable = getEliteAndRestSolutions(trainingPlansPoints, population);
+			TrainingPlan[] eliteSolutions = doubleTable.getEliteSolutions();
+			TrainingPlan[] restSolutions = doubleTable.getRestSolutions();
+			TrainingPlan[] mutatedElite = kMutation(eliteSolutions, allExercises);
+			TrainingPlan[] mutatedRest = kMutation(restSolutions, allExercises);
+			TrainingPlan[] nepSolutions = selectNBest(mutatedElite, nep);
+			TrainingPlan[] nspSolutions = selectNBest(mutatedRest, nsp);
+			population = createNewPopulation(globalBest, nepSolutions, nspSolutions, allExercises);
+		}
 	}
-	// wybrac najlepszych, spoœród najlepszych wybrac elite i resztê,
-	// mutac k razy kazda elite i reszte, sposrod mutacji elity wybrac nep spoœrod mutacji reszty wybrac nsp, 
+	
 	// utworzyc nowa populacje z tego, z reszty miejsc co zostanie to losowe zapelnienie
 	public static int getBestPlanIndex(int[] trainingPlansPoints) {
 		int bestIndex = 0;
@@ -147,6 +131,41 @@ public class Main {
 			}
 		}	
 		return mutatedPlan;
+	}
+	
+	public static TrainingPlan[] selectNBest(TrainingPlan[] population, int n) {
+		TrainingPlan[] selectedPopulation = new TrainingPlan[n];
+		int[] plansPoints = evaluate(population);
+		for(int h = 0; h < n; h++) {
+			int bestIndex = 0;
+			int points = Integer.MIN_VALUE;
+			for(int i = 0; i < plansPoints.length; i++) {
+				if(plansPoints[i] > points) {
+					points = plansPoints[i];
+					bestIndex = i;
+				}
+			}
+			selectedPopulation[h] = new TrainingPlan(population[bestIndex].getExercisesInPlan().length);
+			selectedPopulation[h].setExercisesInPlanNew(population[bestIndex].getExercisesInPlan());
+			plansPoints[bestIndex] = Integer.MIN_VALUE;
+		}
+		return selectedPopulation;
+	}
+	
+	public static TrainingPlan[] createNewPopulation(TrainingPlan globalBest, TrainingPlan[] nep, TrainingPlan[] nsp, Exercise[] allExercises) {
+		TrainingPlan[] population = new TrainingPlan[populationSize];
+		int currentSize = 1 + nep.length + nsp.length;
+		population[0] = globalBest;
+		for(int i = 1; i < nep.length + 1; i++) {
+			population[i] = nep[i - 1];
+		}
+		for(int i = nep.length + 1; i < nep.length + 1 + nsp.length; i++) {
+			population[i] = nsp[i - 1 - nep.length];
+		}
+		for(int i = nep.length + 1 + nsp.length; i < populationSize; i++) {
+			population[i] = initialize(allExercises);
+		}
+		return population;
 	}
 	
 	public static void oneIteration() {
