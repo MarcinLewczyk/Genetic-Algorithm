@@ -41,7 +41,8 @@ public class Main {
 	//	System.out.println(ranking(test));
 	//	oneIteration();
 	//	multipleIterationsWithFileOutput();
-	    startBees();
+	//	startBeesAlgorithm();
+		startBeesWithOutput();
 	}
 	
 	public static int numOfBestSolutions = 5; // m
@@ -51,7 +52,8 @@ public class Main {
 	public static int nep = 4;
 	public static int iterations = 75;
 	
-	public static void startBees() {
+	
+	public static void startBeesAlgorithm() {
 		Exercise[] allExercises = createExercises();
 		TrainingPlan[] population = fillPopulation(allExercises);
 		int[] trainingPlansPoints;
@@ -67,6 +69,77 @@ public class Main {
 			TrainingPlan[] nspSolutions = selectNBest(mutatedRest, nsp);
 			population = createNewPopulation(globalBest, nepSolutions, nspSolutions, allExercises);
 		}
+	}
+	
+	public static void startBeesWithOutput() {
+		String fileName = "Results.txt";
+		File file = new File(fileName);
+		
+		int[] avgBest = new int[generations];
+		int[] avgWorst = new int[generations];
+		int[] avgAvg = new int[generations];
+		
+		try{
+			FileWriter fileWriter = new FileWriter(file);
+			BufferedWriter bw = new BufferedWriter(fileWriter);  			
+			Exercise[] allExercises = createExercises();
+			
+			for(int i = 0; i < numberOfAlgorithmLaunches; i++) {			
+				TrainingPlan[] population = fillPopulation(allExercises);
+				int[] trainingPlansPoints;
+				for(int j = 0; j < iterations; j++) {
+					int best = Integer.MAX_VALUE;
+			    	int worst = Integer.MIN_VALUE;
+			    	int avg = 0;
+			    	
+					trainingPlansPoints = evaluate(population);
+					TrainingPlan globalBest = population[getBestPlanIndex(trainingPlansPoints)];
+					DoubleTable doubleTable = getEliteAndRestSolutions(trainingPlansPoints, population);
+					TrainingPlan[] eliteSolutions = doubleTable.getEliteSolutions();
+					TrainingPlan[] restSolutions = doubleTable.getRestSolutions();
+					TrainingPlan[] mutatedElite = kMutation(eliteSolutions, allExercises);
+					TrainingPlan[] mutatedRest = kMutation(restSolutions, allExercises);
+					TrainingPlan[] nepSolutions = selectNBest(mutatedElite, nep);
+					TrainingPlan[] nspSolutions = selectNBest(mutatedRest, nsp);
+					population = createNewPopulation(globalBest, nepSolutions, nspSolutions, allExercises);
+					
+					int[] bestTab = new int[generations];
+			    	int[] worstTab = new int[generations];
+			    	int[] avgTab = new int[generations];
+					for(int k = 0; k < populationSize; k++){
+		    			if(best > trainingPlansPoints[k]){
+		    				best = trainingPlansPoints[k];
+		    			}
+		    			if(worst < trainingPlansPoints[k]){
+		    				worst = trainingPlansPoints[k];
+		    			}
+		    			avg += trainingPlansPoints[k];
+					}
+			    	avg = avg / trainingPlansPoints.length;
+			    	bestTab[j] = best;
+			    	worstTab[j] = worst;
+			    	avgTab[j] = avg;
+			    	avgBest[j] += bestTab[j];
+			    	avgWorst[j] += worstTab[j];
+			    	avgAvg[j] += avgTab[j];
+				}
+			}
+			
+			for(int i = 0; i < generations; i++){
+	    		avgBest[i] = avgBest[i] / numberOfAlgorithmLaunches;
+	    		avgWorst[i] = avgWorst[i] / numberOfAlgorithmLaunches; 
+	    		avgAvg[i] = avgAvg[i] / numberOfAlgorithmLaunches;
+	    		bw.write(avgBest[i] + ",");
+	        	bw.write(avgWorst[i] + ",");
+	        	bw.write(avgAvg[i] + ",");
+	        	bw.newLine();
+	    	}
+			bw.close();
+			
+		}catch(IOException e){
+		e.printStackTrace();
+		}
+		System.out.println("Done");
 	}
 	
 	// utworzyc nowa populacje z tego, z reszty miejsc co zostanie to losowe zapelnienie
