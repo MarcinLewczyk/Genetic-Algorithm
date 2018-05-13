@@ -45,11 +45,11 @@ public class Main {
 		startBeesWithOutput();
 	}
 	
-	public static int numOfBestSolutions = 5; // m
-	public static int neighborhoodSize = 3; // k
-	public static int numOfEliteSolutions = 2; //e
-	public static int nsp = 2;
-	public static int nep = 4;
+	public static int numOfBestSolutions = 8; // m 5
+	public static int neighborhoodSize = 4; // k 3
+	public static int numOfEliteSolutions = 5; //e 2   numOfEliteSolutions < numOfBestSolutions
+	public static int nsp = 2; // 2
+	public static int nep = 4; // 4
 	public static int iterations = 75;
 	
 	
@@ -184,9 +184,11 @@ public class Main {
 	public static TrainingPlan[] kMutation(TrainingPlan[] population, Exercise[] allExercises) {
 		int mutationSize = population.length * neighborhoodSize;
 		TrainingPlan[] mutatedPopulation = new TrainingPlan[mutationSize];
+		int iterator = 0;
 		for(int i = 0; i < population.length; i++) {
 			for(int j = 0; j < neighborhoodSize; j++) {
-				mutatedPopulation[2 * i + i + j] = mutate(population[i], allExercises);
+				mutatedPopulation[iterator] = mutate(population[i], allExercises);
+				iterator++;
 			}
 		}	
 		return mutatedPopulation;
